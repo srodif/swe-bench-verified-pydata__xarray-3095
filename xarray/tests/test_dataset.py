@@ -2117,6 +2117,30 @@ class TestDataset:
         with raises_regex(ValueError, 'contain all variables in original'):
             orig.copy(data={'var1': new_var1})
 
+    def test_copy_preserves_unicode_dtype(self):
+        # Regression test for issue #3095
+        # Dataset.copy(deep=True) should preserve unicode dtypes
+        ds = Dataset(
+            coords={'x': ['foo'], 'y': ('x', ['bar'])},
+            data_vars={'z': ('x', ['baz'])})
+        
+        # Check original dtypes
+        assert ds.x.dtype == '<U3'
+        assert ds.y.dtype == '<U3'
+        assert ds.z.dtype == '<U3'
+        
+        # Test shallow copy
+        shallow_copy = ds.copy(deep=False)
+        assert shallow_copy.x.dtype == '<U3'
+        assert shallow_copy.y.dtype == '<U3'
+        assert shallow_copy.z.dtype == '<U3'
+        
+        # Test deep copy - this was previously converting coordinate x to object dtype
+        deep_copy = ds.copy(deep=True)
+        assert deep_copy.x.dtype == '<U3'
+        assert deep_copy.y.dtype == '<U3'
+        assert deep_copy.z.dtype == '<U3'
+
     def test_rename(self):
         data = create_test_data()
         newnames = {'var1': 'renamed_var1', 'dim2': 'renamed_dim2'}

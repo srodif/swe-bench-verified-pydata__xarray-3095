@@ -3480,6 +3480,31 @@ class TestDataArray:
 
         assert_identical(da['a'], expected_orig)
 
+    def test_copy_preserves_unicode_dtype(self):
+        # Regression test for issue #3095  
+        # DataArray.copy() should preserve unicode dtypes in coordinates
+        ds = xr.Dataset(
+            coords={'x': ['foo'], 'y': ('x', ['bar'])},
+            data_vars={'z': ('x', ['baz'])})
+        da = ds.z
+        
+        # Check original dtypes
+        assert da.x.dtype == '<U3'
+        assert da.y.dtype == '<U3'
+        assert da.dtype == '<U3'
+        
+        # Test shallow copy - this was previously converting coordinate x to object dtype  
+        shallow_copy = da.copy(deep=False)
+        assert shallow_copy.x.dtype == '<U3'
+        assert shallow_copy.y.dtype == '<U3'
+        assert shallow_copy.dtype == '<U3'
+        
+        # Test deep copy - this was previously converting coordinate x to object dtype
+        deep_copy = da.copy(deep=True)
+        assert deep_copy.x.dtype == '<U3'
+        assert deep_copy.y.dtype == '<U3'
+        assert deep_copy.dtype == '<U3'
+
     def test_real_and_imag(self):
         array = DataArray(1 + 2j)
         assert_identical(array.real, DataArray(1))

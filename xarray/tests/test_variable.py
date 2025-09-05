@@ -530,6 +530,22 @@ class VariableSubclassobjects:
         with raises_regex(ValueError, 'must match shape of object'):
             orig.copy(data=new_data)
 
+    def test_copy_index_preserves_dtype(self):
+        # Regression test for issue #3095
+        # IndexVariable.copy(deep=True) should preserve unicode dtypes
+        import numpy as np
+        arr = np.array(['foo', 'bar'], dtype='<U3')
+        orig = IndexVariable('x', arr)
+        assert orig.dtype == '<U3'
+        
+        # Test shallow copy
+        shallow_copy = orig.copy(deep=False)
+        assert shallow_copy.dtype == '<U3'
+        
+        # Test deep copy - this was previously converting to object dtype
+        deep_copy = orig.copy(deep=True)
+        assert deep_copy.dtype == '<U3'
+
     def test_real_and_imag(self):
         v = self.cls('x', np.arange(3) - 1j * np.arange(3), {'foo': 'bar'})
         expected_re = self.cls('x', np.arange(3), {'foo': 'bar'})
